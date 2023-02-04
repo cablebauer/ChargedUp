@@ -5,37 +5,57 @@
 package frc.robot.subsystems;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
-import org.photonvision.RobotPoseEstimator;
+import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class camera extends SubsystemBase {
   /** Creates a new camera. */
   
-  RobotPoseEstimator poseFactory;
+  PhotonPoseEstimator  poseRefinery;
   PhotonCamera machineCamera;
   String currentfilter;
   boolean didISucceed;
-  //TODO implement a apriltagfield layout. Class seemed to have changed from documentation, supply path via string or path object to proceed
-  // do not pass go do not collect 1 million dollars.  
+  AprilTagFieldLayout aLayout;
+  boolean layoutfailed;
+  
+  
+
   public camera() {
+    layoutfailed = false;
+
     //TODO Possibly change this?
     didISucceed = false; 
     //TODO change default to whatever I decide the default filter will be. 
     currentfilter = "Default";
     machineCamera = new PhotonCamera("3468 Main camera"); 
     machineCamera.setDriverMode(!didISucceed);
+
+    try {
+      aLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2023ChargedUp.m_resourceFile);
+    } catch (Exception e) {
+      layoutfailed = true;
+
+      
+    }
+    if(layoutfailed == false){
+    poseRefinery = new PhotonPoseEstimator(aLayout,org.photonvision.PhotonPoseEstimator.PoseStrategy.LOWEST_AMBIGUITY ,machineCamera,Constants.CameraConstants.camToRobot);
+    }
   }
+
   public void enabledrivermode (){
     machineCamera.setDriverMode(true);
   }
@@ -123,28 +143,31 @@ public class camera extends SubsystemBase {
   }
   //for the following null is an error
   public Transform3d getCamtoTarget(){
-    if(getBesttarget() != null || currentfilter == "tag"){
+    if(getBesttarget() != null){
       return getBesttarget().getBestCameraToTarget();
     }
     else{ return null;}
   }
 
-  /*TODO Get corners appears to be deprecated. Look into replacement
-  public double[] getBestCorners(){
-    
-    return null;
-
-  }
-  */
 
 
   //UGHHHH No transform 2d for non apriltag targets. 
 
 
-  //TODO Implement robotposeestimator once possible. 
+ 
+  public Optional<EstimatedRobotPose> poseestimate(Pose3d lastpose3d){
+
+    if(layoutfailed = false || gettargets() != null){
+      poseRefinery.setReferencePose(lastpose3d);
+      return poseRefinery.update();
+      
+    }
+    else{
+      return null;
+    }
+  };
 
 
-  //TODO Implement a method to convert pose3d to pose 2d, Simple as implmenting the values into a new object? 
-
+  
 
 }
