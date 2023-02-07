@@ -16,7 +16,6 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -36,12 +35,9 @@ public class camera extends SubsystemBase {
 
   public camera() {
     layoutfailed = false;
-
-    //TODO Possibly change this?
-    didISucceed = false; 
-    //TODO change default to whatever I decide the default filter will be. 
-    currentfilter = "Default";
-    machineCamera = new PhotonCamera("3468 Main camera"); 
+    didISucceed = true; 
+    currentfilter = "AprilTag";
+    machineCamera = new PhotonCamera("3468"); 
     machineCamera.setDriverMode(!didISucceed);
 
     try {
@@ -104,16 +100,14 @@ public class camera extends SubsystemBase {
   public void changeFilter(String filter){
     filter = filter.toLowerCase();
     if(filter == "cube" || filter ==  "cubes" ){
-      /* TODO Implement the swapping of the filter once calibrated. 
-      Omited only to allow for deployment till the calibration and proper naming of the filters.  */
+      machineCamera.setPipelineIndex(2);
     }
     else if(filter == "cone" || filter == "cones"){
-
+      machineCamera.setPipelineIndex(1);
     }
     else if(filter == "tag" || filter == "tags" || filter == "apriltags"){
-
+      machineCamera.setPipelineIndex(0);
     }
-    else if (filter == "tape" || filter == "tapes"){};
   }
   // for the following -1 is an error code 
   public double getbestyaw(){
@@ -166,8 +160,4 @@ public class camera extends SubsystemBase {
       return null;
     }
   };
-
-
-  
-
 }
